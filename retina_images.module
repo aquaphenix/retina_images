@@ -45,16 +45,19 @@ function retina_images_form_image_style_form_alter(&$form, FormStateInterface $f
   // Get the style to pass to our new theme function.
   $style = $form_state->getFormObject()->getEntity();
 
-  // Override the preview image area to use our own preview.
-  // Show the thumbnail preview.
-  $preview_arguments = array('#theme' => 'retina_images_image_style_preview', '#style' => $style);
-  $form['preview'] = array(
-    '#type' => 'item',
-    '#title' => \Drupal::translation()->translate('Preview'),
-    '#markup' => drupal_render($preview_arguments),
-    // Render preview above parent elements.
-    '#weight' => -5,
-  );
+  // Don't show the preview on the add form.
+  if (isset($form['preview'])) {
+    // Override the preview image area to use our own preview.
+    // Show the thumbnail preview.
+    $preview_arguments = array('#theme' => 'retina_images_image_style_preview', '#style' => $style);
+    $form['preview'] = array(
+      '#type' => 'item',
+      '#title' => \Drupal::translation()->translate('Preview'),
+      '#markup' => drupal_render($preview_arguments),
+      // Render preview above parent elements.
+      '#weight' => -5,
+    );
+  }
 }
 
 /**
