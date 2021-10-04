@@ -53,7 +53,7 @@ function retina_images_form_image_style_form_alter(&$form, FormStateInterface $f
     $form['preview'] = array(
       '#type' => 'item',
       '#title' => \Drupal::translation()->translate('Preview'),
-      '#markup' => drupal_render($preview_arguments),
+      '#markup' => \Drupal::service('renderer')->render($preview_arguments),
       // Render preview above parent elements.
       '#weight' => -5,
     );
@@ -76,7 +76,7 @@ function template_preprocess_retina_images_image_style_preview(&$variables) {
   $variables['style_name'] = $style->label();
 
   // Cache bypass token.
-  $variables['cache_bypass'] = REQUEST_TIME;
+  $variables['cache_bypass'] = \Drupal::time()->getRequestTime();
 
   // Sample image info.
   $sample_width = 160;

@@ -100,14 +100,14 @@ class PreviewController extends ControllerBase {
 
     $image = [
       '#theme' => 'image',
-      '#uri' => $variables['derivative']['url'] . '?cache_bypass=' . REQUEST_TIME,
+      '#uri' => $variables['derivative']['url'] . '?cache_bypass=' . \Drupal::time()->getRequestTime(),
       '#attributes' => [
         'width' => $variables['derivative']['width'],
         'height' => $variables['derivative']['height'],
       ]
     ];
 
-    $image_tag = drupal_render($image);
+    $image_tag = \Drupal::service('renderer')->render($image);
 
     $output = <<<EOT
 <html>
