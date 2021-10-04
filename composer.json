@@ -1,0 +1,6 @@
+{
+    "name": "aquaphenix/retina_images",
+    "description": "Adds an option to all image effects included with core to allow them to output high resolution images for high DPI or retina displays",
+    "type": "drupal-module",
+    "license": "GPL-2.0-or-later"
+}
