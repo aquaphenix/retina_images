@@ -7,9 +7,12 @@
 
 namespace Drupal\retina_images\Controller;
 
+use Drupal\Component\Datetime\TimeInterface;
 use Drupal\Core\Config\ImmutableConfig;
 use Drupal\Core\Controller\ControllerBase;
+use Drupal\Core\File\FileUrlGeneratorInterface;
 use Drupal\Core\Image\ImageFactory;
+use Drupal\Core\Render\RendererInterface;
 use Drupal\image\ImageStyleInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -44,6 +47,27 @@ class PreviewController extends ControllerBase {
   protected $logger;
 
   /**
+   * The file URL generator service.
+   *
+   * @var \Drupal\Core\File\FileUrlGeneratorInterface
+   */
+  protected $fileUrlGenerator;
+
+  /**
+   * The request time as a Unix timestamp.
+   *
+   * @var int
+   */
+  protected $requestTime;
+
+  /**
+   * The renderer service.
+   *
+   * @var \Drupal\Core\Render\RendererInterface
+   */
+  protected $renderer;
+
+  /**
    * Constructs a ImageStyleDownloadController object.
    *
    * @param \Drupal\Core\Image\ImageFactory $image_factory
@@ -51,8 +75,18 @@ class PreviewController extends ControllerBase {
    * @param \Psr\Log\LoggerInterface $logger
    *   A logger instance.
    */
-  public function __construct(ImageFactory $image_factory, LoggerInterface $logger, ImmutableConfig $immutableConfig) {
+  public function __construct(
+    ImageFactory $image_factory,
+    FileUrlGeneratorInterface $file_url_generator,
+    TimeInterface $request_time,
+    RendererInterface $renderer,
+    LoggerInterface $logger,
+    ImmutableConfig $immutableConfig
+  ) {
     $this->imageFactory = $image_factory;
+    $this->fileUrlGenerator = $file_url_generator;
+    $this->requestTime = $request_time->getRequestTime();
+    $this->renderer = $renderer;
     $this->logger = $logger;
     $this->config = $immutableConfig;
   }
@@ -64,6 +98,9 @@ class PreviewController extends ControllerBase {
   public static function create(ContainerInterface $container) {
     return new static(
       $container->get('image.factory'),
+      $container->get('file_url_generator'),
+      $container->get('datetime.time'),
+      $container->get('renderer'),
       $container->get('logger.factory')->get('image'),
       $container->get('config.factory')->get('image.settings')
     );
@@ -92,7 +129,7 @@ class PreviewController extends ControllerBase {
     $filename = $path_info['basename'];
 
     $variables['derivative'] = [
-      'url' => file_url_transform_relative(file_create_url($preview_file)),
+      'url' => $this->fileUrlGenerator->generateString($preview_file),
       'width' => $preview_image->getWidth(),
       'height' => $preview_image->getHeight(),
     ];
@@ -100,14 +137,14 @@ class PreviewController extends ControllerBase {
 
     $image = [
       '#theme' => 'image',
-      '#uri' => $variables['derivative']['url'] . '?cache_bypass=' . \Drupal::time()->getRequestTime(),
+      '#uri' => $variables['derivative']['url'] . '?cache_bypass=' . $this->requestTime,
       '#attributes' => [
         'width' => $variables['derivative']['width'],
         'height' => $variables['derivative']['height'],
       ]
     ];
 
-    $image_tag = \Drupal::service('renderer')->render($image);
+    $image_tag = $this->renderer->render($image);
 
     $output = <<<EOT
 <html>

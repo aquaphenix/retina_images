@@ -2,7 +2,8 @@
 
 /**
  * @file
- * This module provides an image effect to assist in outputing high resolution images.
+ * This module provides an image effect to assist in outputing high resolution
+ *   images.
  */
 
 use Drupal\Core\Form\FormStateInterface;
@@ -22,26 +23,26 @@ function retina_images_image_effect_info_alter(&$effects) {
  * Implements hook_theme().
  */
 function retina_images_theme() {
-  return array(
-    'retina_images_image_crop_summary' => array(
-      'variables' => array('data' => NULL, 'effect' => array()),
-    ),
-    'retina_images_image_resize_summary' => array(
-      'variables' => array('data' => NULL, 'effect' => array()),
-    ),
-    'retina_images_image_scale_summary' => array(
-      'variables' => array('data' => NULL, 'effect' => array()),
-    ),
-    'retina_images_image_style_preview' => array(
-      'variables' => array('style' => NULL),
-    ),
-  );
+  return [
+    'retina_images_image_crop_summary' => [
+      'variables' => ['data' => NULL, 'effect' => []],
+    ],
+    'retina_images_image_resize_summary' => [
+      'variables' => ['data' => NULL, 'effect' => []],
+    ],
+    'retina_images_image_scale_summary' => [
+      'variables' => ['data' => NULL, 'effect' => []],
+    ],
+    'retina_images_image_style_preview' => [
+      'variables' => ['style' => NULL],
+    ],
+  ];
 }
 
 /**
  * Implements hook_form_FORM_ID_alter().
  */
-function retina_images_form_image_style_form_alter(&$form, FormStateInterface $form_state) {
+function retina_images_form_image_style_form_alter(array &$form, FormStateInterface $form_state) {
   // Get the style to pass to our new theme function.
   $style = $form_state->getFormObject()->getEntity();
 
@@ -49,14 +50,17 @@ function retina_images_form_image_style_form_alter(&$form, FormStateInterface $f
   if (isset($form['preview'])) {
     // Override the preview image area to use our own preview.
     // Show the thumbnail preview.
-    $preview_arguments = array('#theme' => 'retina_images_image_style_preview', '#style' => $style);
-    $form['preview'] = array(
+    $preview_arguments = [
+      '#theme' => 'retina_images_image_style_preview',
+      '#style' => $style,
+    ];
+    $form['preview'] = [
       '#type' => 'item',
       '#title' => \Drupal::translation()->translate('Preview'),
       '#markup' => \Drupal::service('renderer')->render($preview_arguments),
       // Render preview above parent elements.
       '#weight' => -5,
-    );
+    ];
   }
 }
 
@@ -70,6 +74,9 @@ function retina_images_form_image_style_form_alter(&$form, FormStateInterface $f
  *   - style: \Drupal\image\ImageStyleInterface image style being previewed.
  */
 function template_preprocess_retina_images_image_style_preview(&$variables) {
+  /** @var \Drupal\Core\File\FileUrlGeneratorInterface $url_generator */
+  $url_generator = Drupal::service('file_url_generator');
+
   // Style information.
   $style = $variables['style'];
   $variables['style_id'] = $style->id();
@@ -86,11 +93,11 @@ function template_preprocess_retina_images_image_style_preview(&$variables) {
   // Set up original file information.
   $original_path = \Drupal::config('image.settings')->get('preview_image');
   $original_image = $image_factory->get($original_path);
-  $variables['original'] = array(
-    'url' => file_url_transform_relative(file_create_url($original_path)),
+  $variables['original'] = [
+    'url' => $url_generator->generateString($original_path),
     'width' => $original_image->getWidth(),
     'height' => $original_image->getHeight(),
-  );
+  ];
   if ($variables['original']['width'] > $variables['original']['height']) {
     $variables['preview']['original']['width'] = min($variables['original']['width'], $sample_width);
     $variables['preview']['original']['height'] = round($variables['preview']['original']['width'] / $variables['original']['width'] * $variables['original']['height']);
@@ -110,11 +117,11 @@ function template_preprocess_retina_images_image_style_preview(&$variables) {
     $style->createDerivative($original_path, $preview_file);
   }
   $preview_image = $image_factory->get($preview_file);
-  $variables['derivative'] = array(
-    'url' => file_url_transform_relative(file_create_url($preview_file)),
+  $variables['derivative'] = [
+    'url' => $url_generator->generateString($preview_file),
     'width' => $preview_image->getWidth(),
     'height' => $preview_image->getHeight(),
-  );
+  ];
   $style->transformDimensions($variables['derivative'], $preview_file);
   if ($variables['derivative']['width'] > $variables['derivative']['height']) {
     $variables['preview']['derivative']['width'] = min($variables['derivative']['width'], $sample_width);
@@ -126,30 +133,30 @@ function template_preprocess_retina_images_image_style_preview(&$variables) {
   }
 
   // Build the preview of the original image.
-  $variables['original']['rendered'] = array(
+  $variables['original']['rendered'] = [
     '#theme' => 'image',
     '#uri' => $original_path,
     '#alt' => t('Sample original image'),
     '#title' => '',
-    '#attributes' => array(
+    '#attributes' => [
       'width' => $variables['original']['width'],
       'height' => $variables['original']['height'],
       'style' => 'width: ' . $variables['preview']['original']['width'] . 'px; height: ' . $variables['preview']['original']['height'] . 'px;',
-    ),
-  );
+    ],
+  ];
 
   // Build the preview of the image style derivative. Timestamps are added
   // to prevent caching of images on the client side.
-  $variables['derivative']['rendered'] = array(
+  $variables['derivative']['rendered'] = [
     '#theme' => 'image',
     '#uri' => $variables['derivative']['url'] . '?cache_bypass=' . $variables['cache_bypass'],
     '#alt' => t('Sample modified image'),
     '#title' => '',
-    '#attributes' => array(
+    '#attributes' => [
       'width' => $variables['derivative']['width'],
       'height' => $variables['derivative']['height'],
       'style' => 'width: ' . $variables['preview']['derivative']['width'] . 'px; height: ' . $variables['preview']['derivative']['height'] . 'px;',
-    ),
-  );
+    ],
+  ];
 
 }
